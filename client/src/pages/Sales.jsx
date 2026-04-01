@@ -12,8 +12,9 @@ const Sales = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    product_id: '', quantity_sold: '', sale_date: '', revenue: ''
+    product_id: '', quantity_sold: '', sale_date: '', discount_percent: '0'
   })
+  const [preview, setPreview] = useState(null)
   const [searchType, setSearchType] = useState('')
   const [searchDate, setSearchDate] = useState('')
   const [searchName, setSearchName] = useState('')
@@ -34,28 +35,52 @@ const Sales = () => {
 
   useEffect(() => { fetchData() }, [])
 
+  // Auto-calculate preview whenever form changes
+  useEffect(() => {
+    if (!form.product_id || !form.quantity_sold) {
+      setPreview(null)
+      return
+    }
+    const product = products.find(p => p.id === parseInt(form.product_id))
+    if (!product) return
+
+    const qty = parseFloat(form.quantity_sold) || 0
+    const discount = parseFloat(form.discount_percent) || 0
+    const grossRevenue = parseFloat(product.price) * qty
+    const discountAmount = grossRevenue * (discount / 100)
+    const finalRevenue = grossRevenue - discountAmount
+    const totalCost = parseFloat(product.cost_price || 0) * qty
+    const profit = finalRevenue - totalCost
+
+    setPreview({
+      grossRevenue: grossRevenue.toFixed(2),
+      discountAmount: discountAmount.toFixed(2),
+      finalRevenue: finalRevenue.toFixed(2),
+      profit: profit.toFixed(2),
+      isProfit: profit >= 0
+    })
+  }, [form.product_id, form.quantity_sold, form.discount_percent, products])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       await addSale(form)
-      setForm({ product_id: '', quantity_sold: '', sale_date: '', revenue: '' })
+      setForm({ product_id: '', quantity_sold: '', sale_date: '', discount_percent: '0' })
+      setPreview(null)
       setError('')
       fetchData()
     } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to record sale'
-      setError(msg)
+      setError(err.response?.data?.message || 'Failed to record sale')
     }
   }
 
   const handleSearch = () => {
     if (searchType === 'date') {
-      const results = sales.filter(s => s.sale_date?.split('T')[0] === searchDate)
-      setFilteredSales(results)
+      setFilteredSales(sales.filter(s => s.sale_date?.split('T')[0] === searchDate))
     } else if (searchType === 'name') {
-      const results = sales.filter(s =>
+      setFilteredSales(sales.filter(s =>
         s.product_name?.toLowerCase().includes(searchName.toLowerCase())
-      )
-      setFilteredSales(results)
+      ))
     }
     setSearched(true)
   }
@@ -86,8 +111,9 @@ const Sales = () => {
 
           {/* Sales Form */}
           <motion.div variants={fadeUp} className="bg-white rounded-2xl p-6 border border-kirana-earth/20 shadow-sm mb-8">
-            <h2 className="text-lg font-bold text-kirana-dark mb-4">Record Today's Sales</h2>
+            <h2 className="text-lg font-bold text-kirana-dark mb-4">Record a Sale</h2>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
               <select
                 value={form.product_id}
                 onChange={e => { setForm({ ...form, product_id: e.target.value }); setError('') }}
@@ -96,17 +122,23 @@ const Sales = () => {
               >
                 <option value="">Select Product</option>
                 {products.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.name} — ₹{p.price}/{p.unit} (stock: {p.current_stock})
+                  </option>
                 ))}
               </select>
+
               <input
                 type="number"
                 placeholder="Quantity Sold"
                 value={form.quantity_sold}
                 onChange={e => setForm({ ...form, quantity_sold: e.target.value })}
                 required
+                min="0.01"
+                step="0.01"
                 className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
               />
+
               <input
                 type="date"
                 value={form.sale_date}
@@ -114,20 +146,57 @@ const Sales = () => {
                 required
                 className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
               />
-              <input
-                type="number"
-                placeholder="Revenue (₹)"
-                value={form.revenue}
-                onChange={e => setForm({ ...form, revenue: e.target.value })}
-                required
-                className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
-              />
 
-              {/* Error message */}
-              {error && (
-                <motion.p
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="Discount % (0 = no discount)"
+                  value={form.discount_percent}
+                  onChange={e => setForm({ ...form, discount_percent: e.target.value })}
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  className="w-full border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
+                />
+              </div>
+
+              {/* Live Preview */}
+              {preview && (
+                <motion.div
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
+                  className="md:col-span-2 bg-kirana-cream border border-kirana-earth/20 rounded-xl p-4"
+                >
+                  <p className="text-xs font-medium text-kirana-earth mb-2">📊 Sale Preview</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div>
+                      <p className="text-kirana-earth text-xs">Gross Revenue</p>
+                      <p className="font-bold text-kirana-dark">₹{preview.grossRevenue}</p>
+                    </div>
+                    {parseFloat(preview.discountAmount) > 0 && (
+                      <div>
+                        <p className="text-kirana-earth text-xs">Discount</p>
+                        <p className="font-bold text-orange-500">-₹{preview.discountAmount}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-kirana-earth text-xs">Final Revenue</p>
+                      <p className="font-bold text-kirana-brown">₹{preview.finalRevenue}</p>
+                    </div>
+                    <div>
+                      <p className="text-kirana-earth text-xs">Profit / Loss</p>
+                      <p className={`font-bold ${preview.isProfit ? 'text-green-600' : 'text-red-500'}`}>
+                        {preview.isProfit ? '+' : ''}₹{preview.profit}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   className="md:col-span-2 text-red-600 text-sm text-center bg-red-50 border border-red-200 p-3 rounded-xl"
                 >
                   ⚠️ {error}
@@ -151,9 +220,7 @@ const Sales = () => {
               <button
                 onClick={() => { setSearchType('date'); setSearchName(''); setSearched(false) }}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  searchType === 'date'
-                    ? 'bg-kirana-brown text-white'
-                    : 'border border-kirana-earth/30 text-kirana-earth hover:bg-kirana-cream'
+                  searchType === 'date' ? 'bg-kirana-brown text-white' : 'border border-kirana-earth/30 text-kirana-earth hover:bg-kirana-cream'
                 }`}
               >
                 📅 Search by Date
@@ -161,18 +228,13 @@ const Sales = () => {
               <button
                 onClick={() => { setSearchType('name'); setSearchDate(''); setSearched(false) }}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  searchType === 'name'
-                    ? 'bg-kirana-brown text-white'
-                    : 'border border-kirana-earth/30 text-kirana-earth hover:bg-kirana-cream'
+                  searchType === 'name' ? 'bg-kirana-brown text-white' : 'border border-kirana-earth/30 text-kirana-earth hover:bg-kirana-cream'
                 }`}
               >
                 🔍 Search by Item
               </button>
               {searched && (
-                <button
-                  onClick={handleClearSearch}
-                  className="px-4 py-2 rounded-xl text-sm font-medium border border-red-200 text-red-400 hover:bg-red-50 transition-colors"
-                >
+                <button onClick={handleClearSearch} className="px-4 py-2 rounded-xl text-sm font-medium border border-red-200 text-red-400 hover:bg-red-50 transition-colors">
                   ✕ Clear
                 </button>
               )}
@@ -180,60 +242,23 @@ const Sales = () => {
 
             <AnimatePresence>
               {searchType === 'date' && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex gap-3 items-center"
-                >
-                  <input
-                    type="date"
-                    value={searchDate}
-                    onChange={e => setSearchDate(e.target.value)}
-                    className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
-                  />
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleSearch}
-                    disabled={!searchDate}
-                    className="bg-kirana-brown text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-kirana-orange transition-colors disabled:opacity-50"
-                  >
-                    Search
-                  </motion.button>
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex gap-3 items-center">
+                  <input type="date" value={searchDate} onChange={e => setSearchDate(e.target.value)} className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown" />
+                  <button onClick={handleSearch} disabled={!searchDate} className="bg-kirana-brown text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-kirana-orange transition-colors disabled:opacity-50">Search</button>
                 </motion.div>
               )}
             </AnimatePresence>
 
             <AnimatePresence>
               {searchType === 'name' && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex gap-3 items-center"
-                >
-                  <select
-                    value={searchName}
-                    onChange={e => setSearchName(e.target.value)}
-                    className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown w-64"
-                  >
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex gap-3 items-center">
+                  <select value={searchName} onChange={e => setSearchName(e.target.value)} className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown w-64">
                     <option value="">Select item...</option>
                     {[...new Set(sales.map(s => s.product_name))].filter(Boolean).sort().map(name => (
                       <option key={name} value={name}>{name}</option>
                     ))}
                   </select>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleSearch}
-                    disabled={!searchName}
-                    className="bg-kirana-brown text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-kirana-orange transition-colors disabled:opacity-50"
-                  >
-                    Search
-                  </motion.button>
+                  <button onClick={handleSearch} disabled={!searchName} className="bg-kirana-brown text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-kirana-orange transition-colors disabled:opacity-50">Search</button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -246,26 +271,32 @@ const Sales = () => {
             </h2>
             {(searched ? filteredSales : sales).length === 0 ? (
               <p className="text-kirana-earth text-center py-8">
-                {searched ? 'No sales found for your search' : 'No sales recorded yet'}
+                {searched ? 'No sales found' : 'No sales recorded yet'}
               </p>
             ) : (
               <div className="space-y-2">
-                {(searched ? filteredSales : sales).map(sale => (
-                  <motion.div
-                    key={sale.id}
-                    variants={fadeUp}
-                    className="flex items-center justify-between p-3 bg-kirana-light rounded-xl"
-                  >
-                    <div>
-                      <p className="font-medium text-kirana-dark">{sale.product_name}</p>
-                      <p className="text-xs text-kirana-earth">{sale.sale_date?.split('T')[0]}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-kirana-dark">{sale.quantity_sold} {sale.unit}</p>
-                      <p className="text-sm text-kirana-green font-medium">₹{sale.revenue}</p>
-                    </div>
-                  </motion.div>
-                ))}
+                {(searched ? filteredSales : sales).map(sale => {
+                  const profit = parseFloat(sale.profit || 0)
+                  const isProfit = profit >= 0
+                  return (
+                    <motion.div key={sale.id} variants={fadeUp} className="flex items-center justify-between p-3 bg-kirana-light rounded-xl">
+                      <div>
+                        <p className="font-medium text-kirana-dark">{sale.product_name}</p>
+                        <p className="text-xs text-kirana-earth">{sale.sale_date?.split('T')[0]}</p>
+                        {parseFloat(sale.discount_percent) > 0 && (
+                          <p className="text-xs text-orange-500">{sale.discount_percent}% discount applied</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-kirana-dark">{sale.quantity_sold} {sale.unit}</p>
+                        <p className="text-sm text-kirana-brown font-medium">₹{parseFloat(sale.final_revenue || sale.revenue).toFixed(2)}</p>
+                        <p className={`text-xs font-medium ${isProfit ? 'text-green-600' : 'text-red-500'}`}>
+                          {isProfit ? '▲' : '▼'} ₹{Math.abs(profit).toFixed(2)}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )
+                })}
               </div>
             )}
           </motion.div>

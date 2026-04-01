@@ -14,7 +14,7 @@ const Inventory = () => {
   const [newStock, setNewStock] = useState('')
   const [form, setForm] = useState({
     name: '', category: '', current_stock: '',
-    min_threshold: '', unit: '', price: ''
+    min_threshold: '', unit: '', price: '', cost_price: ''
   })
 
   const fetchProducts = async () => {
@@ -35,7 +35,7 @@ const Inventory = () => {
     try {
       await addProduct(form)
       setShowModal(false)
-      setForm({ name: '', category: '', current_stock: '', min_threshold: '', unit: '', price: '' })
+      setForm({ name: '', category: '', current_stock: '', min_threshold: '', unit: '', price: '', cost_price: '' })
       fetchProducts()
     } catch (err) {
       console.error(err)
@@ -122,7 +122,10 @@ const Inventory = () => {
                 <div className="space-y-1 text-sm text-kirana-earth">
                   <p>Stock: <span className="font-medium text-kirana-dark">{product.current_stock} {product.unit}</span></p>
                   <p>Min threshold: <span className="font-medium text-kirana-dark">{product.min_threshold} {product.unit}</span></p>
-                  <p>Price: <span className="font-medium text-kirana-dark">₹{product.price}</span></p>
+                  <p>Selling Price: <span className="font-medium text-kirana-dark">₹{product.price}</span></p>
+                  {product.cost_price && (
+                    <p>Cost Price: <span className="font-medium text-kirana-dark">₹{product.cost_price}</span></p>
+                  )}
                 </div>
 
                 {/* Edit Stock + Remove */}
@@ -204,7 +207,8 @@ const Inventory = () => {
                   { key: 'current_stock', label: 'Current Stock', type: 'number' },
                   { key: 'min_threshold', label: 'Minimum Threshold', type: 'number' },
                   { key: 'unit', label: 'Unit (kg, pcs, litre)', type: 'text' },
-                  { key: 'price', label: 'Price (₹)', type: 'number' },
+                  { key: 'price', label: 'Selling Price (₹)', type: 'number' },
+                  { key: 'cost_price', label: 'Cost Price / Purchase Price (₹)', type: 'number' },
                 ].map(field => (
                   <input
                     key={field.key}
@@ -212,7 +216,7 @@ const Inventory = () => {
                     placeholder={field.label}
                     value={form[field.key]}
                     onChange={e => setForm({ ...form, [field.key]: e.target.value })}
-                    required
+                    required={field.key !== 'cost_price'}
                     className="w-full border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
                   />
                 ))}

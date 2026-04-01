@@ -6,22 +6,26 @@ import Loader from '../components/common/Loader'
 import { getProducts, getWeeklySales, getFestivals, getWeather } from '../lib/api'
 import { stagger, fadeUp, pageTransition } from '../lib/variants'
 import VideoBackground from '../components/common/VideoBackground'
+import { getProducts, getWeeklySales, getFestivals, getWeather, getOverallProfit } from '../lib/api'
 const Dashboard = () => {
   const [products, setProducts] = useState([])
   const [weeklySales, setWeeklySales] = useState([])
   const [festivals, setFestivals] = useState([])
   const [weather, setWeather] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [overallProfit, setOverallProfit] = useState(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [p, s, f, w] = await Promise.all([
+        const [p, s, f, w, op] = await Promise.all([
           getProducts(),
           getWeeklySales(),
           getFestivals(),
-          getWeather('Delhi')
+          getWeather('Delhi'),
+          getOverallProfit()
         ])
+        setOverallProfit(op.data.data)
         setProducts(p.data.data)
         setWeeklySales(s.data.data)
         setFestivals(f.data.data)
@@ -74,6 +78,12 @@ const Dashboard = () => {
             <StatsCard title="Total Products" value={products.length} icon="📦" color="bg-kirana-cream text-kirana-brown" />
             <StatsCard title="Low Stock Alerts" value={lowStockItems.length} icon="⚠️" color="bg-red-50 text-red-600" />
             <StatsCard title="Weekly Revenue" value={`₹${totalRevenue.toFixed(0)}`} icon="💰" color="bg-green-50 text-green-600" />
+            <StatsCard
+  title="Overall Profit/Loss"
+  value={`${parseFloat(overallProfit?.total_profit || 0) >= 0 ? '+' : ''}₹${parseFloat(overallProfit?.total_profit || 0).toFixed(0)}`}
+  icon={parseFloat(overallProfit?.total_profit || 0) >= 0 ? '📈' : '📉'}
+  color={parseFloat(overallProfit?.total_profit || 0) >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}
+/>
             <StatsCard title="Upcoming Festivals" value={festivals.length} icon="🎉" color="bg-orange-50 text-orange-600" />
           </motion.div>
 

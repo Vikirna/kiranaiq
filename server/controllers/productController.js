@@ -13,13 +13,13 @@ const getProducts = async (req, res) => {
 }
 
 const addProduct = async (req, res) => {
-  const { name, category, current_stock, min_threshold, unit, price } = req.body
+  const { name, category, current_stock, min_threshold, unit, price, cost_price } = req.body
   try {
     const result = await pool.query(
       `INSERT INTO products
-       (name, category, current_stock, min_threshold, unit, price, user_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [name, category, current_stock, min_threshold, unit, price, req.user.id]
+       (name, category, current_stock, min_threshold, unit, price, cost_price, user_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [name, category, current_stock, min_threshold, unit, price, cost_price || 0, req.user.id]
     )
     res.status(201).json({ success: true, data: result.rows[0] })
   } catch (err) {

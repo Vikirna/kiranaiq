@@ -32,3 +32,5 @@ export const runPredictions = () => API.post('/predictions/run')
 
 export const getWeather = (city) => API.get(`/external/weather?city=${city}`)
 export const getFestivals = () => API.get('/external/festivals')
+
+export const getOverallProfit = () => API.get('/sales/overall-profit')
