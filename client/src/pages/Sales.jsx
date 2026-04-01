@@ -221,4 +221,59 @@ const Sales = () => {
                     className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown w-64"
                   >
                     <option value="">Select item...</option>
-                    {[...new Set(sales.map(s => s.product_name))].filter
+                    {[...new Set(sales.map(s => s.product_name))].filter(Boolean).sort().map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleSearch}
+                    disabled={!searchName}
+                    className="bg-kirana-brown text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-kirana-orange transition-colors disabled:opacity-50"
+                  >
+                    Search
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* Sales History */}
+          <motion.div variants={fadeUp} className="bg-white rounded-2xl p-6 border border-kirana-earth/20 shadow-sm">
+            <h2 className="text-lg font-bold text-kirana-dark mb-4">
+              {searched ? `Results (${filteredSales.length} found)` : 'Sales History'}
+            </h2>
+            {(searched ? filteredSales : sales).length === 0 ? (
+              <p className="text-kirana-earth text-center py-8">
+                {searched ? 'No sales found for your search' : 'No sales recorded yet'}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {(searched ? filteredSales : sales).map(sale => (
+                  <motion.div
+                    key={sale.id}
+                    variants={fadeUp}
+                    className="flex items-center justify-between p-3 bg-kirana-light rounded-xl"
+                  >
+                    <div>
+                      <p className="font-medium text-kirana-dark">{sale.product_name}</p>
+                      <p className="text-xs text-kirana-earth">{sale.sale_date?.split('T')[0]}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-kirana-dark">{sale.quantity_sold} {sale.unit}</p>
+                      <p className="text-sm text-kirana-green font-medium">₹{sale.revenue}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+        </motion.div>
+      </div>
+    </motion.div>
+  )
+}
+
+export default Sales
