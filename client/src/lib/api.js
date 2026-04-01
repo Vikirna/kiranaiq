@@ -21,6 +21,7 @@ export const getProducts = () => API.get('/products')
 export const addProduct = (data) => API.post('/products', data)
 export const updateProduct = (id, data) => API.put(`/products/${id}`, data)
 export const deleteProduct = (id) => API.delete(`/products/${id}`)
+export const updateStock = (id, data) => API.patch(`/products/${id}/stock`, data)
 
 export const getSales = () => API.get('/sales')
 export const addSale = (data) => API.post('/sales', data)

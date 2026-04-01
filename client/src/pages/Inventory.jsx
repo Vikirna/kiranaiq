@@ -2,13 +2,16 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from '../components/common/Navbar'
 import Loader from '../components/common/Loader'
-import { getProducts, addProduct, deleteProduct } from '../lib/api'
+import { getProducts, addProduct, deleteProduct, updateStock } from '../lib/api'
 import { stagger, fadeUp, pageTransition, springPop } from '../lib/variants'
 import VideoBackground from '../components/common/VideoBackground'
+
 const Inventory = () => {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [editingStock, setEditingStock] = useState(null)
+  const [newStock, setNewStock] = useState('')
   const [form, setForm] = useState({
     name: '', category: '', current_stock: '',
     min_threshold: '', unit: '', price: ''
@@ -48,6 +51,17 @@ const Inventory = () => {
     }
   }
 
+  const handleUpdateStock = async (id) => {
+    try {
+      await updateStock(id, { current_stock: newStock })
+      setEditingStock(null)
+      setNewStock('')
+      fetchProducts()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const getStockColor = (product) => {
     const stock = parseFloat(product.current_stock)
     const threshold = parseFloat(product.min_threshold)
@@ -74,11 +88,11 @@ const Inventory = () => {
         <motion.div variants={stagger} initial="hidden" animate="visible">
 
           <motion.div variants={fadeUp} className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-kirana-dark"
-  style={{ textShadow: '0 0 40px rgba(255,255,255,0.8), 0 2px 8px rgba(255,255,255,0.9)' }}
->
-  Inventory
-</h1>
+            <h1 className="text-3xl font-bold text-kirana-dark"
+              style={{ textShadow: '0 0 40px rgba(255,255,255,0.8), 0 2px 8px rgba(255,255,255,0.9)' }}
+            >
+              Inventory
+            </h1>
             <motion.button
               {...springPop}
               onClick={() => setShowModal(true)}
@@ -110,12 +124,48 @@ const Inventory = () => {
                   <p>Min threshold: <span className="font-medium text-kirana-dark">{product.min_threshold} {product.unit}</span></p>
                   <p>Price: <span className="font-medium text-kirana-dark">₹{product.price}</span></p>
                 </div>
-                <button
-                  onClick={() => handleDelete(product.id)}
-                  className="mt-3 text-xs text-red-400 hover:text-red-600 transition-colors"
-                >
-                  Remove
-                </button>
+
+                {/* Edit Stock + Remove */}
+                <div className="mt-3 flex items-center gap-3">
+                  {editingStock === product.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={newStock}
+                        onChange={e => setNewStock(e.target.value)}
+                        placeholder="New stock"
+                        className="border border-kirana-earth/30 rounded-lg px-2 py-1 text-xs w-24 focus:outline-none focus:border-kirana-brown"
+                      />
+                      <button
+                        onClick={() => handleUpdateStock(product.id)}
+                        className="text-xs bg-kirana-brown text-white px-2 py-1 rounded-lg"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingStock(null)}
+                        className="text-xs text-kirana-earth"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => { setEditingStock(product.id); setNewStock(product.current_stock) }}
+                        className="text-xs text-kirana-brown hover:underline transition-colors"
+                      >
+                        Edit Stock
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             ))}
           </motion.div>

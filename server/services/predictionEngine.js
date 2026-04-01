@@ -27,7 +27,7 @@ const runPredictions = async (userId) => {
         [product.id, userId]
       )
 
-      if (salesHistory.rows.length < 3) continue
+      if (salesHistory.rows.length < 1) continue
 
       // Average daily sales
       const totalSold = salesHistory.rows.reduce(

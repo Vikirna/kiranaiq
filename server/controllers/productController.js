@@ -56,4 +56,18 @@ const deleteProduct = async (req, res) => {
   }
 }
 
-module.exports = { getProducts, addProduct, updateProduct, deleteProduct }
+const updateStock = async (req, res) => {
+  const { id } = req.params
+  const { current_stock } = req.body
+  try {
+    const result = await pool.query(
+      `UPDATE products SET current_stock = $1 WHERE id = $2 AND user_id = $3 RETURNING *`,
+      [current_stock, id, req.user.id]
+    )
+    res.json({ success: true, data: result.rows[0] })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+module.exports = { getProducts, addProduct, updateProduct, deleteProduct, updateStock }
