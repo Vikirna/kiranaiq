@@ -10,7 +10,8 @@ const app = express()
 app.use(cors({
     origin: [
       'http://localhost:3000',
-      'https://kiranaiq-kappa.vercel.app'
+      'https://kiranaiq-kappa.vercel.app',
+      'https://kiranaiq-b5nppnokk-vikirna03-6019s-projects.vercel.app'
     ],
     credentials: true
   }))
