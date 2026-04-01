@@ -10,6 +10,7 @@ const Sales = () => {
   const [sales, setSales] = useState([])
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [form, setForm] = useState({
     product_id: '', quantity_sold: '', sale_date: '', revenue: ''
   })
@@ -38,9 +39,11 @@ const Sales = () => {
     try {
       await addSale(form)
       setForm({ product_id: '', quantity_sold: '', sale_date: '', revenue: '' })
+      setError('')
       fetchData()
     } catch (err) {
-      console.error(err)
+      const msg = err.response?.data?.message || 'Failed to record sale'
+      setError(msg)
     }
   }
 
@@ -87,7 +90,7 @@ const Sales = () => {
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <select
                 value={form.product_id}
-                onChange={e => setForm({ ...form, product_id: e.target.value })}
+                onChange={e => { setForm({ ...form, product_id: e.target.value }); setError('') }}
                 required
                 className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
               >
@@ -119,6 +122,18 @@ const Sales = () => {
                 required
                 className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
               />
+
+              {/* Error message */}
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="md:col-span-2 text-red-600 text-sm text-center bg-red-50 border border-red-200 p-3 rounded-xl"
+                >
+                  ⚠️ {error}
+                </motion.p>
+              )}
+
               <motion.button
                 {...springPop}
                 type="submit"
@@ -132,8 +147,6 @@ const Sales = () => {
           {/* Search Section */}
           <motion.div variants={fadeUp} className="bg-white rounded-2xl p-6 border border-kirana-earth/20 shadow-sm mb-8">
             <h2 className="text-lg font-bold text-kirana-dark mb-4">Search Sales</h2>
-
-            {/* Search type buttons */}
             <div className="flex gap-3 mb-4">
               <button
                 onClick={() => { setSearchType('date'); setSearchName(''); setSearched(false) }}
@@ -165,7 +178,6 @@ const Sales = () => {
               )}
             </div>
 
-            {/* Date picker */}
             <AnimatePresence>
               {searchType === 'date' && (
                 <motion.div
@@ -194,7 +206,6 @@ const Sales = () => {
               )}
             </AnimatePresence>
 
-            {/* Name search */}
             <AnimatePresence>
               {searchType === 'name' && (
                 <motion.div
@@ -205,64 +216,9 @@ const Sales = () => {
                   className="flex gap-3 items-center"
                 >
                   <select
-  value={searchName}
-  onChange={e => setSearchName(e.target.value)}
-  className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown w-64"
->
-  <option value="">Select item...</option>
-  {[...new Set(sales.map(s => s.product_name))].filter(Boolean).sort().map(name => (
-    <option key={name} value={name}>{name}</option>
-  ))}
-</select>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleSearch}
-                    disabled={!searchName}
-                    className="bg-kirana-brown text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-kirana-orange transition-colors disabled:opacity-50"
+                    value={searchName}
+                    onChange={e => setSearchName(e.target.value)}
+                    className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown w-64"
                   >
-                    Search
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Sales History */}
-          <motion.div variants={fadeUp} className="bg-white rounded-2xl p-6 border border-kirana-earth/20 shadow-sm">
-            <h2 className="text-lg font-bold text-kirana-dark mb-4">
-              {searched ? `Results (${filteredSales.length} found)` : 'Sales History'}
-            </h2>
-            {(searched ? filteredSales : sales).length === 0 ? (
-              <p className="text-kirana-earth text-center py-8">
-                {searched ? 'No sales found for your search' : 'No sales recorded yet'}
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {(searched ? filteredSales : sales).map(sale => (
-                  <motion.div
-                    key={sale.id}
-                    variants={fadeUp}
-                    className="flex items-center justify-between p-3 bg-kirana-light rounded-xl"
-                  >
-                    <div>
-                      <p className="font-medium text-kirana-dark">{sale.product_name}</p>
-                      <p className="text-xs text-kirana-earth">{sale.sale_date?.split('T')[0]}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-kirana-dark">{sale.quantity_sold} {sale.unit}</p>
-                      <p className="text-sm text-kirana-green font-medium">₹{sale.revenue}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-
-        </motion.div>
-      </div>
-    </motion.div>
-  )
-}
-
-export default Sales
+                    <option value="">Select item...</option>
+                    {[...new Set(sales.map(s => s.product_name))].filter
