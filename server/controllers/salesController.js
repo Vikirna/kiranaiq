@@ -70,11 +70,11 @@ const addSale = async (req, res) => {
 const getWeeklySales = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT sale_date, SUM(final_revenue) as total_revenue,
+      `SELECT sale_date, SUM(COALESCE(final_revenue, revenue)) as total_revenue,
        SUM(quantity_sold) as total_quantity,
-       SUM(profit) as total_profit
+       SUM(COALESCE(profit, 0)) as total_profit
        FROM sales
-       WHERE user_id = $1 AND sale_date >= NOW() - INTERVAL '7 days'
+       WHERE user_id = $1
        GROUP BY sale_date ORDER BY sale_date ASC`,
       [req.user.id]
     )
@@ -88,9 +88,10 @@ const getOverallProfit = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-        SUM(final_revenue) as total_revenue,
-        SUM(profit) as total_profit,
-        SUM(final_revenue - profit) as total_cost
+        SUM(COALESCE(final_revenue, revenue)) as total_revenue,
+        SUM(COALESCE(profit, 0)) as total_profit,
+        SUM(CASE WHEN COALESCE(profit, 0) > 0 THEN COALESCE(profit, 0) ELSE 0 END) as total_gains,
+        SUM(CASE WHEN COALESCE(profit, 0) < 0 THEN ABS(COALESCE(profit, 0)) ELSE 0 END) as total_losses
        FROM sales WHERE user_id = $1`,
       [req.user.id]
     )

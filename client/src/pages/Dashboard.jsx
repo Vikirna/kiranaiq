@@ -6,6 +6,7 @@ import Loader from '../components/common/Loader'
 import { stagger, fadeUp, pageTransition } from '../lib/variants'
 import VideoBackground from '../components/common/VideoBackground'
 import { getProducts, getWeeklySales, getFestivals, getWeather, getOverallProfit } from '../lib/api'
+
 const Dashboard = () => {
   const [products, setProducts] = useState([])
   const [weeklySales, setWeeklySales] = useState([])
@@ -24,11 +25,11 @@ const Dashboard = () => {
           getWeather('Delhi'),
           getOverallProfit()
         ])
-        setOverallProfit(op.data.data)
         setProducts(p.data.data)
         setWeeklySales(s.data.data)
         setFestivals(f.data.data)
         setWeather(w.data.data)
+        setOverallProfit(op.data.data)
       } catch (err) {
         console.error(err)
       } finally {
@@ -54,36 +55,62 @@ const Dashboard = () => {
       <Navbar />
       <div className="max-w-6xl mx-auto px-6 py-8">
 
-        {/* Header */}
         <motion.div variants={stagger} initial="hidden" animate="visible">
-        <motion.h1 variants={fadeUp} className="text-3xl font-bold text-kirana-dark mb-2"
-  style={{ textShadow: '0 0 40px rgba(255,255,255,0.8), 0 2px 8px rgba(255,255,255,0.9)' }}
->
-  Dashboard
-</motion.h1>
-<motion.p variants={fadeUp} className="font-semibold mb-8 text-kirana-dark"
-  style={{ 
-    textShadow: '0 0 60px rgba(255,255,255,1), 0 0 30px rgba(255,255,255,1), 0 0 10px rgba(255,255,255,1)',
-    filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
-  }}
->
-  {weather && `🌤️ ${weather.temperature}°C · ${weather.condition} · Delhi`}
-</motion.p>
-          {/* Stats */}
+          <motion.h1 variants={fadeUp} className="text-3xl font-bold text-kirana-dark mb-2"
+            style={{ textShadow: '0 0 40px rgba(255,255,255,0.8), 0 2px 8px rgba(255,255,255,0.9)' }}
+          >
+            Dashboard
+          </motion.h1>
+          <motion.p variants={fadeUp} className="font-semibold mb-8 text-kirana-dark"
+            style={{
+              textShadow: '0 0 60px rgba(255,255,255,1), 0 0 30px rgba(255,255,255,1), 0 0 10px rgba(255,255,255,1)',
+              filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
+            }}
+          >
+            {weather && `🌤️ ${weather.temperature}°C · ${weather.condition} · Delhi`}
+          </motion.p>
+
+          {/* Stats Grid */}
           <motion.div
             variants={stagger}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+            className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8"
           >
-            <StatsCard title="Total Products" value={products.length} icon="📦" color="bg-kirana-cream text-kirana-brown" />
-            <StatsCard title="Low Stock Alerts" value={lowStockItems.length} icon="⚠️" color="bg-red-50 text-red-600" />
-            <StatsCard title="Weekly Revenue" value={`₹${totalRevenue.toFixed(0)}`} icon="💰" color="bg-green-50 text-green-600" />
             <StatsCard
-  title="Overall Profit/Loss"
-  value={`${parseFloat(overallProfit?.total_profit || 0) >= 0 ? '+' : ''}₹${parseFloat(overallProfit?.total_profit || 0).toFixed(0)}`}
-  icon={parseFloat(overallProfit?.total_profit || 0) >= 0 ? '📈' : '📉'}
-  color={parseFloat(overallProfit?.total_profit || 0) >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}
-/>
-            <StatsCard title="Upcoming Festivals" value={festivals.length} icon="🎉" color="bg-orange-50 text-orange-600" />
+              title="Total Products"
+              value={products.length}
+              icon="📦"
+              color="bg-kirana-cream text-kirana-brown"
+            />
+            <StatsCard
+              title="Low Stock Alerts"
+              value={lowStockItems.length}
+              icon="⚠️"
+              color="bg-red-50 text-red-600"
+            />
+            <StatsCard
+              title="Total Revenue"
+              value={`₹${totalRevenue.toFixed(0)}`}
+              icon="💰"
+              color="bg-green-50 text-green-600"
+            />
+            <StatsCard
+              title="Total Profit"
+              value={`+₹${parseFloat(overallProfit?.total_gains || 0).toFixed(0)}`}
+              icon="📈"
+              color="bg-green-50 text-green-600"
+            />
+            <StatsCard
+              title="Total Loss"
+              value={`-₹${parseFloat(overallProfit?.total_losses || 0).toFixed(0)}`}
+              icon="📉"
+              color="bg-red-50 text-red-600"
+            />
+            <StatsCard
+              title="Upcoming Festivals"
+              value={festivals.length}
+              icon="🎉"
+              color="bg-orange-50 text-orange-600"
+            />
           </motion.div>
 
           {/* Low Stock Alerts */}
