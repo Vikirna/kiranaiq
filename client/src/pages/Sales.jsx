@@ -12,7 +12,7 @@ const Sales = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    product_id: '', quantity_sold: '', sale_date: '', discount_percent: '0'
+    product_id: '', quantity_sold: '', sale_date: '', discount_percent: ''
   })
   const [preview, setPreview] = useState(null)
   const [searchType, setSearchType] = useState('')
@@ -35,7 +35,6 @@ const Sales = () => {
 
   useEffect(() => { fetchData() }, [])
 
-  // Auto-calculate preview whenever form changes
   useEffect(() => {
     if (!form.product_id || !form.quantity_sold) {
       setPreview(null)
@@ -56,8 +55,9 @@ const Sales = () => {
       grossRevenue: grossRevenue.toFixed(2),
       discountAmount: discountAmount.toFixed(2),
       finalRevenue: finalRevenue.toFixed(2),
-      profit: profit.toFixed(2),
-      isProfit: profit >= 0
+      profit: Math.abs(profit).toFixed(2),
+      isProfit: profit >= 0,
+      isLoss: profit < 0
     })
   }, [form.product_id, form.quantity_sold, form.discount_percent, products])
 
@@ -65,7 +65,7 @@ const Sales = () => {
     e.preventDefault()
     try {
       await addSale(form)
-      setForm({ product_id: '', quantity_sold: '', sale_date: '', discount_percent: '0' })
+      setForm({ product_id: '', quantity_sold: '', sale_date: '', discount_percent: '' })
       setPreview(null)
       setError('')
       fetchData()
@@ -147,18 +147,16 @@ const Sales = () => {
                 className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
               />
 
-              <div className="relative">
-                <input
-                  type="number"
-                  placeholder="Discount % (0 = no discount)"
-                  value={form.discount_percent}
-                  onChange={e => setForm({ ...form, discount_percent: e.target.value })}
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  className="w-full border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
-                />
-              </div>
+              <input
+                type="number"
+                placeholder="Discount % (optional)"
+                value={form.discount_percent}
+                onChange={e => setForm({ ...form, discount_percent: e.target.value })}
+                min="0"
+                max="100"
+                step="0.1"
+                className="border border-kirana-earth/30 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-kirana-brown"
+              />
 
               {/* Live Preview */}
               {preview && (
@@ -167,7 +165,7 @@ const Sales = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="md:col-span-2 bg-kirana-cream border border-kirana-earth/20 rounded-xl p-4"
                 >
-                  <p className="text-xs font-medium text-kirana-earth mb-2">📊 Sale Preview</p>
+                  <p className="text-xs font-medium text-kirana-earth mb-3">📊 Sale Preview</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div>
                       <p className="text-kirana-earth text-xs">Gross Revenue</p>
@@ -184,9 +182,11 @@ const Sales = () => {
                       <p className="font-bold text-kirana-brown">₹{preview.finalRevenue}</p>
                     </div>
                     <div>
-                      <p className="text-kirana-earth text-xs">Profit / Loss</p>
+                      <p className="text-kirana-earth text-xs">
+                        {preview.isProfit ? '📈 Profit' : '📉 Loss'}
+                      </p>
                       <p className={`font-bold ${preview.isProfit ? 'text-green-600' : 'text-red-500'}`}>
-                        {preview.isProfit ? '+' : ''}₹{preview.profit}
+                        {preview.isProfit ? '+' : '-'}₹{preview.profit}
                       </p>
                     </div>
                   </div>
@@ -289,9 +289,11 @@ const Sales = () => {
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-kirana-dark">{sale.quantity_sold} {sale.unit}</p>
-                        <p className="text-sm text-kirana-brown font-medium">₹{parseFloat(sale.final_revenue || sale.revenue).toFixed(2)}</p>
+                        <p className="text-sm text-kirana-brown font-medium">
+                          ₹{parseFloat(sale.final_revenue || sale.revenue).toFixed(2)}
+                        </p>
                         <p className={`text-xs font-medium ${isProfit ? 'text-green-600' : 'text-red-500'}`}>
-                          {isProfit ? '▲' : '▼'} ₹{Math.abs(profit).toFixed(2)}
+                          {isProfit ? '📈 Profit' : '📉 Loss'} ₹{Math.abs(profit).toFixed(2)}
                         </p>
                       </div>
                     </motion.div>

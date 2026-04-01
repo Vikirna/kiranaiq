@@ -6,7 +6,7 @@ const getSales = async (req, res) => {
       `SELECT s.*, p.name as product_name, p.unit
        FROM sales s JOIN products p ON s.product_id = p.id
        WHERE s.user_id = $1
-       ORDER BY s.sale_date DESC`,
+       ORDER BY s.created_at DESC`,
       [req.user.id]
     )
     res.json({ success: true, data: result.rows })
@@ -43,11 +43,10 @@ const addSale = async (req, res) => {
       })
     }
 
-    // Auto-calculate revenue and profit
     const grossRevenue = parseFloat(price) * parseFloat(quantity_sold)
     const discountAmount = grossRevenue * (parseFloat(discount_percent) / 100)
     const finalRevenue = grossRevenue - discountAmount
-    const totalCost = parseFloat(cost_price) * parseFloat(quantity_sold)
+    const totalCost = parseFloat(cost_price || 0) * parseFloat(quantity_sold)
     const profit = finalRevenue - totalCost
 
     const result = await pool.query(
