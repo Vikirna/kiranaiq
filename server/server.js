@@ -8,11 +8,15 @@ dotenv.config()
 const app = express()
 
 app.use(cors({
-    origin: [
-      'http://localhost:3000',
-      'https://kiranaiq-kappa.vercel.app',
-      'https://kiranaiq-b5nppnokk-vikirna03-6019s-projects.vercel.app'
-    ],
+    origin: function(origin, callback) {
+      if (!origin || 
+          origin.includes('vercel.app') || 
+          origin.includes('localhost')) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
     credentials: true
   }))
 app.use(express.json())
