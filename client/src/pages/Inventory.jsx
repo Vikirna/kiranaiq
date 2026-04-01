@@ -124,7 +124,7 @@ const Inventory = () => {
                   <p>Min threshold: <span className="font-medium text-kirana-dark">{product.min_threshold} {product.unit}</span></p>
                   <p>Selling Price: <span className="font-medium text-kirana-dark">₹{product.price}</span></p>
                   {product.cost_price && (
-                    <p>Cost Price: <span className="font-medium text-kirana-dark">₹{product.cost_price}</span></p>
+                    <p>Cost Price: <span className="font-medium text-kirana-dark">₹{product.cost_price ?? '—'}</span></p>
                   )}
                 </div>
 
