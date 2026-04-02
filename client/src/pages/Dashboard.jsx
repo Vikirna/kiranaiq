@@ -40,7 +40,7 @@ const Dashboard = () => {
   }, [])
 
   const lowStockItems = products.filter(
-    p => parseFloat(p.current_stock) <= parseFloat(p.min_threshold)
+    p => parseFloat(p.current_stock) <= parseFloat(p.min_threshold) * 1.5
   )
 
   const totalRevenue = weeklySales.reduce(
