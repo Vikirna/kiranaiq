@@ -6,11 +6,15 @@ import { useAuth } from '../context/AuthContext'
 import { fadeUp, stagger } from '../lib/variants'
 
 const Login = () => {
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { setUser } = useAuth()
-  const navigate = useNavigate()
+  const params = new URLSearchParams(window.location.search)
+const isDemo = params.get('demo') === 'true'
+const [form, setForm] = useState(
+  isDemo ? { email: 'demo@kiranaiq.com', password: 'demo1234' } : { email: '', password: '' }
+)
+const [error, setError] = useState('')
+const [loading, setLoading] = useState(false)
+const { setUser } = useAuth()
+const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -67,20 +71,22 @@ const Login = () => {
           )}
 
           {/* Demo credentials box */}
-          <motion.div
-            variants={fadeUp}
-            className="bg-kirana-cream border border-kirana-brown/20 rounded-xl p-4 mb-6"
-          >
-            <p className="text-sm font-medium text-kirana-brown mb-1">Demo Account</p>
-            <p className="text-xs text-kirana-earth">Email: demo@kiranaiq.com</p>
-            <p className="text-xs text-kirana-earth">Password: demo1234</p>
-            <button
-              onClick={() => setForm({ email: 'demo@kiranaiq.com', password: 'demo1234' })}
-              className="text-xs text-kirana-brown font-medium mt-2 hover:underline"
-            >
-              Click to fill demo credentials →
-            </button>
-          </motion.div>
+          {isDemo && (
+  <motion.div
+    variants={fadeUp}
+    className="bg-kirana-cream border border-kirana-brown/20 rounded-xl p-4 mb-6"
+  >
+    <p className="text-sm font-medium text-kirana-brown mb-1">Demo Account</p>
+    <p className="text-xs text-kirana-earth">Email: demo@kiranaiq.com</p>
+    <p className="text-xs text-kirana-earth">Password: demo1234</p>
+    <button
+      onClick={() => setForm({ email: 'demo@kiranaiq.com', password: 'demo1234' })}
+      className="text-xs text-kirana-brown font-medium mt-2 hover:underline"
+    >
+      Click to fill demo credentials →
+    </button>
+  </motion.div>
+)}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input

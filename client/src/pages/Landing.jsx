@@ -98,7 +98,7 @@ const Landing = () => {
                 Get Started Free
               </motion.button>
             </Link>
-            <Link to="/login">
+            <Link to="/login?demo=true">
               <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.97 }}
